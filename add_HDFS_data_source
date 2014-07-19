@@ -1,0 +1,53 @@
+def add_hdfs_data_source(self, token, name, hdfs_version, host, port, username, group_list, jobtracker_host,
+                             jobtracker_port, description="", high_availability="False", shared="True", ssl="False",
+                             connection_parameters=[]):
+        """
+        Adds a data source using the Chorus API using parameters
+        :param token: token used for authentication
+        :param name: name to give the data source
+        :param hdfs_version: data source version / make of Hadoop
+        :param host: Hadoop namenode host
+        :param port: Hadoop namenode port
+        :param username: username which has access to files in hdfs
+        :param group_list:  group which user belongs to
+        :param jobtracker_host: host ip/dns name of JT
+        :param jobtracker_port: host ip/dns port of JT
+        :param description:  optional - text describing data source
+        :param high_availability: optional - is NN HA?  True or False
+        :param shared:  optional - share DS publicly? True or False
+        :param ssl: optional - use SSL connection to host? True or False
+        :param connection_parameters: List of dictionaries which have key:value pairs for extra conn params
+        :return:
+        """
+
+        # Robot passes in everything as a string, so we need to fix this
+        if type(connection_parameters) in [str, unicode]:
+            connection_parameters = eval(connection_parameters)
+
+        shared = eval(shared)
+        high_availability = eval(high_availability)
+        ssl = eval(ssl)
+
+        kwargs = {"name": name,
+                  "hdfs_version": hdfs_version,
+                  "host": host,
+                  "port": port,
+                  "username": username,
+                  "group_list": group_list,
+                  "description": description,
+                  "job_tracker_host": jobtracker_host,
+                  "job_tracker_port": jobtracker_port,
+                  "high_availability": high_availability,
+                  "shared": shared,
+                  "ssl": ssl,
+                  "connection_parameters": connection_parameters}
+
+        response = self.chorus_api.add_hdfs_data_source(token, self.chorus_address, **kwargs)
+
+        if response.status_code == 201:
+            logger.info("Data source {0} on {1} was created successfully...".format(name, host))
+        elif response.status_code == 422:
+            self._response_code_parser(response)  # handle multiple error codes being stuck into a 422 response
+        else:
+            raise FailedtoCreateEntityException("Creating data source '{0}' failed with error code {1}: "
+                                                    "{2}".format(name, response.status_code, response.reason))
